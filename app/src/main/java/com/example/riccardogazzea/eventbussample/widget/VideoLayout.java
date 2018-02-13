@@ -84,9 +84,8 @@ public class VideoLayout extends RelativeLayout {
                 new DefaultTrackSelector(videoTrackSelectionFactory);
 
         // 2. Create the player
-        mPlayer =
-                ExoPlayerFactory.newSimpleInstance(context, trackSelector);
-        mPlayer.setPlayWhenReady(true);
+        mPlayer = ExoPlayerFactory.newSimpleInstance(context, trackSelector);
+        mPlayer.setPlayWhenReady(false);
         mSimpleExoPlayerView = findViewById(R.id.videolayout_player);
         mSimpleExoPlayerView.setPlayer(mPlayer);
 
