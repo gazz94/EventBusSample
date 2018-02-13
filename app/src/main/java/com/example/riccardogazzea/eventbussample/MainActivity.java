@@ -1,36 +1,47 @@
 package com.example.riccardogazzea.eventbussample;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.View;
 
-import com.baseandroid.events.Event;
 import com.baseandroid.events.EventDispatcher;
 import com.baseandroid.events.rx.RxEventProcessor;
-import com.baseandroid.events.rx.annotations.RxSubscribe;
+import com.example.riccardogazzea.eventbussample.events.UiRecyclerStateIdleEvent;
+import com.example.riccardogazzea.eventbussample.events.UiRecyclerStateNotIdleEvent;
 
 public class MainActivity extends AppCompatActivity {
 
-    RecyclerView recyclerView;
-    CustomAdapter customAdapter;
+    RecyclerView mRecyclerView;
+    MediaModelAdapter mAdapter;
+    LinearLayoutManager mLayoutManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // l'EventProcessor dovrebbe idealmente essere inizializzato a livello di Application
         EventDispatcher.useEventProcessor(RxEventProcessor.newInstance());
-        recyclerView = findViewById(R.id.list);
-        customAdapter = new CustomAdapter();
-        recyclerView.setAdapter(customAdapter);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
+
+        // init adapter
+        mAdapter = new MediaModelAdapter(MockUtils.VIDEOS);
+
+        // init recycler
+        mLayoutManager = new LinearLayoutManager(this);
+        mRecyclerView = findViewById(R.id.list);
+        mRecyclerView.setLayoutManager(mLayoutManager);
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
-                int pos = ((LinearLayoutManager)recyclerView.getLayoutManager()).findFirstCompletelyVisibleItemPosition();
-                EventDispatcher.post(new CustomEvent(pos, customAdapter.getVideoUri(pos), customAdapter.isVideo(pos)));
+
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    notifyRecyclerViewIdleState();
+                } else {
+                    notifyRecyclerViewNotIdleState();
+                }
             }
 
             @Override
@@ -38,11 +49,32 @@ public class MainActivity extends AppCompatActivity {
                 super.onScrolled(recyclerView, dx, dy);
             }
         });
+        mRecyclerView.setAdapter(mAdapter);
+
+        // simulate UiRecyclerStateIdleEvent to play first video of the list
+        mRecyclerView.post(new Runnable() {
+            @Override
+            public void run() {
+                notifyRecyclerViewIdleState();
+            }
+        });
+    }
+
+    private void notifyRecyclerViewIdleState() {
+        final int firstCompletelyVisibleItemPosition = mLayoutManager.findFirstCompletelyVisibleItemPosition();
+        if (RecyclerView.NO_POSITION != firstCompletelyVisibleItemPosition) {
+            final View view = mLayoutManager.findViewByPosition(firstCompletelyVisibleItemPosition);
+            EventDispatcher.post(new UiRecyclerStateIdleEvent(view.getTag()));
+        }
+    }
+
+    private void notifyRecyclerViewNotIdleState() {
+        EventDispatcher.post(new UiRecyclerStateNotIdleEvent());
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        customAdapter = null;
+        mAdapter = null;
     }
 }
