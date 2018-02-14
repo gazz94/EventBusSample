@@ -24,8 +24,10 @@ public class MainActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Fabric.with(this, new Crashlytics());
-        // l'EventProcessor dovrebbe idealmente essere inizializzato a livello di Application
+
+        // TODO: spostare in MainApplication queste inizializzazioni
         EventDispatcher.useEventProcessor(RxEventProcessor.newInstance());
+        ExoPlayerManager.initInstance(getApplicationContext());
 
         // init adapter
         mAdapter = new MediaModelAdapter(MockUtils.VIDEOS);
@@ -78,5 +80,7 @@ public class MainActivity extends BaseActivity {
     protected void onDestroy() {
         super.onDestroy();
         mAdapter = null;
+
+        ExoPlayerManager.getInstance().release();
     }
 }
