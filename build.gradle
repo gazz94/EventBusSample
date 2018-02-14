@@ -26,3 +26,26 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+project.ext.computeVersionCode = { versionName ->
+    int versionCode = 0;
+    String[] splittedVersionName = versionName.split("\\.");
+
+    String majorIdentifier = splittedVersionName.getAt(0);
+    if(majorIdentifier != null) {
+        versionCode = versionCode + Integer.parseInt(majorIdentifier) * 1000000;
+    }
+    String minorIdentifier = splittedVersionName[1];
+    if(minorIdentifier != null) {
+        versionCode = versionCode + Integer.parseInt(minorIdentifier) * 1000;
+    }
+    String patchIdentifier = splittedVersionName[2];
+    if(patchIdentifier != null) {
+        versionCode = versionCode + Integer.parseInt(patchIdentifier);
+    }
+
+    return versionCode;
+}
+
+project.ext.set("versionName", "0.1.0")
+project.ext.set("versionCode", project.computeVersionCode(project.versionName))

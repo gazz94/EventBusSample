@@ -16,8 +16,8 @@ android {
         applicationId "cc.officina.poc.nowr_video"
         minSdkVersion 19
         targetSdkVersion 26
-        versionCode 1
-        versionName "1.0"
+        versionName project.versionName
+        versionCode project.versionCode
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {

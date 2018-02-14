@@ -10,10 +10,11 @@ import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewStub;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
+import android.widget.Toast;
 
 import com.baseandroid.events.EventDispatcher;
 import com.baseandroid.events.rx.annotations.RxSubscribe;
@@ -39,6 +40,8 @@ import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.util.Util;
 
+import static com.google.android.exoplayer2.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL;
+
 /**
  * Created on 13/02/18.
  *
@@ -48,14 +51,44 @@ public class VideoLayout extends RelativeLayout {
 
     private VideoMediaModel mMediaModel;
 
-    private SimpleExoPlayerView mSimpleExoPlayerView;
     private SimpleExoPlayer mPlayer;
+    ExtractorMediaSource mMediaSource;
+
+    private SimpleExoPlayerView mSimpleExoPlayerView;
     private ImageView mPlaceholderImageView;
-    private TextView mTextTextView;
     private ImageButton mPlaybackImageButton, mVolumeImageButton;
+
     private boolean mPlaying = false;
-    //hold track of the audio state
+
     private boolean mAudioPlaying = false;
+
+    private OnClickListener onVolumeClickListener = new OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (mAudioPlaying) {
+                mAudioPlaying = false;
+                mPlayer.setVolume(0);
+
+                notifyAudioStateChange();
+            } else {
+                mAudioPlaying = true;
+                mPlayer.setVolume(1);
+
+                notifyAudioStateChange();
+            }
+        }
+    };
+
+    private OnClickListener onPlayClickListener = new OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (mPlaying) {
+                pause();
+            } else {
+                play();
+            }
+        }
+    };
 
     public VideoLayout(Context context) {
         super(context);
@@ -83,22 +116,7 @@ public class VideoLayout extends RelativeLayout {
         setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getResources().getDimensionPixelSize(R.dimen.listitem_height)));
         setBackgroundColor(ContextCompat.getColor(context, android.R.color.black));
 
-        // 1. Create a default TrackSelector
-        BandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
-        TrackSelection.Factory videoTrackSelectionFactory = new AdaptiveTrackSelection.Factory(bandwidthMeter);
-        TrackSelector trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
-
-        // 2. Create the player
-        mPlayer = ExoPlayerFactory.newSimpleInstance(context, trackSelector);
-        mPlayer.setPlayWhenReady(false);
-        mSimpleExoPlayerView = findViewById(R.id.videolayout_player);
-        mSimpleExoPlayerView.setPlayer(mPlayer);
-        //hide the video controller
-        mSimpleExoPlayerView.setUseController(false);
-        //set volume off
-        //mPlayer.setVolume(0);
         mPlaceholderImageView = findViewById(R.id.videolayout_placeholder_image);
-        mTextTextView = findViewById(R.id.videolayout_test_text);
         mPlaybackImageButton = findViewById(R.id.videolayout_play);
         mVolumeImageButton = findViewById(R.id.videolayout_volume);
     }
@@ -124,7 +142,7 @@ public class VideoLayout extends RelativeLayout {
     public void onConsumeEvent(UiRecyclerStateIdleEvent event) {
         if (mMediaModel != null) {
             if (mMediaModel.equals(event.getTag())) {
-                if (NetworkUtility.getNetworkType(getContext()) == NetworkUtility.TYPE_WIFI){
+                if (NetworkUtility.getNetworkType(getContext()) == NetworkUtility.TYPE_WIFI) {
                     play();
                 }
                 showControllers(true);
@@ -147,10 +165,6 @@ public class VideoLayout extends RelativeLayout {
 
     public void setVideoMediaModel(VideoMediaModel mediaModel) {
         mMediaModel = mediaModel;
-        ExtractorMediaSource mediaSource = new ExtractorMediaSource.Factory(buildDataSourceFactory(true)).createMediaSource(
-                Uri.parse(mMediaModel.getUrl()));
-        // Prepare the player with the source.
-        mPlayer.prepare(mediaSource);
     }
 
     private DataSource.Factory buildDataSourceFactory(boolean useBandwidthMeter) {
@@ -165,6 +179,24 @@ public class VideoLayout extends RelativeLayout {
         return new DefaultHttpDataSourceFactory(Util.getUserAgent(getContext(), "EventBusSample"), bandwidthMeter);
     }
 
+    private void notifyPlayStateChange() {
+        if (mPlaying) {
+            mPlaceholderImageView.animate().alpha(0f).setDuration(150).start();
+            mPlaybackImageButton.setImageResource(R.drawable.ic_pause_white_24dp);
+        } else {
+            mPlaceholderImageView.animate().alpha(1f).setDuration(150).start();
+            mPlaybackImageButton.setImageResource(R.drawable.ic_play_arrow_white_24dp);
+        }
+    }
+
+    private void notifyAudioStateChange() {
+        if (mAudioPlaying) {
+            mVolumeImageButton.setImageResource(R.drawable.ic_volume_up_white_24dp);
+        } else {
+            mVolumeImageButton.setImageResource(R.drawable.ic_volume_off_white_24dp);
+        }
+    }
+
     private boolean isPlaying() {
         return mPlaying;
     }
@@ -173,66 +205,89 @@ public class VideoLayout extends RelativeLayout {
         return mAudioPlaying;
     }
 
+    private boolean prepare() {
+        if (mMediaModel != null) {
+            if (mPlayer == null) {
+                // 1. Create a default TrackSelector
+                BandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
+                TrackSelection.Factory videoTrackSelectionFactory = new AdaptiveTrackSelection.Factory(bandwidthMeter);
+                TrackSelector trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
+
+                // 2. Create the player
+                mPlayer = ExoPlayerFactory.newSimpleInstance(getContext(), trackSelector);
+                mPlayer.setPlayWhenReady(false);
+                mPlayer.setVolume(0);
+
+                if (mSimpleExoPlayerView == null) {
+                    final ViewStub viewStub = findViewById(R.id.videolayout_player_stub);
+                    if (viewStub != null) {
+                        mSimpleExoPlayerView = (SimpleExoPlayerView) viewStub.inflate();
+                    } else {
+                        mSimpleExoPlayerView = findViewById(R.id.videolayout_player);
+                    }
+                    mSimpleExoPlayerView.setPlayer(mPlayer);
+                    mSimpleExoPlayerView.setUseController(false);
+                    mSimpleExoPlayerView.setResizeMode(RESIZE_MODE_FILL);
+                }
+            }
+
+            if (mMediaSource == null) {
+                // Prepare the player with the source.
+                mMediaSource = new ExtractorMediaSource.Factory(buildDataSourceFactory(true)).createMediaSource(Uri.parse(mMediaModel.getUrl()));
+                mPlayer.prepare(mMediaSource);
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public void play() {
-        if (mPlayer != null) {
+        if (prepare()) {
+
             mPlaying = true;
             mPlayer.setPlayWhenReady(true);
-            //change the icon
-            mPlaybackImageButton.setImageResource(R.drawable.exo_controls_pause);
+
+            notifyPlayStateChange();
+        } else {
+            Toast.makeText(getContext(), "Ops... Something went wrong!", Toast.LENGTH_SHORT).show();
         }
     }
 
     public void pause() {
-        if (isPlaying()) {
-            mPlaying = false;
-            mPlayer.setPlayWhenReady(false);
-            //change the icon
-            mPlaybackImageButton.setImageResource(R.drawable.exo_controls_play);
+        if (mPlayer != null) {
+            if (mPlaying) {
+                mPlaying = false;
+                mPlayer.setPlayWhenReady(false);
+
+                notifyPlayStateChange();
+            }
         }
     }
 
     public void stop() {
-        if (isPlaying()) {
+        if (mPlayer != null) {
             mPlaying = false;
+
             mPlayer.stop();
             mPlayer.release();
+            mPlayer = null;
         }
+
+        if (mMediaSource != null) {
+            mMediaSource.releaseSource();
+            mMediaSource = null;
+        }
+
+        notifyPlayStateChange();
     }
 
-    private OnClickListener onVolumeClickListener = new OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            if (isAudioPlaying()){
-                mAudioPlaying = false;
-                mPlayer.setVolume(0);
-                //change the volume icon
-                mVolumeImageButton.setImageResource(android.R.drawable.ic_lock_silent_mode);
-            }else{
-                mAudioPlaying = true;
-                mPlayer.setVolume(1);
-                //change the volume icon
-                mVolumeImageButton.setImageResource(android.R.drawable.ic_lock_silent_mode_off);
-            }
-        }
-    };
-
-    private OnClickListener onPlayClickListener = new OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            if (isPlaying()){
-                pause();
-            }else{
-                play();
-            }
-        }
-    };
-
-    private void showControllers(boolean show){
+    private void showControllers(boolean show) {
         //show the controllers on a video at time
-        if (show){
+        if (show) {
             mPlaybackImageButton.setVisibility(VISIBLE);
             mVolumeImageButton.setVisibility(VISIBLE);
-        }else{
+        } else {
             mPlaybackImageButton.setVisibility(INVISIBLE);
             mVolumeImageButton.setVisibility(INVISIBLE);
         }
