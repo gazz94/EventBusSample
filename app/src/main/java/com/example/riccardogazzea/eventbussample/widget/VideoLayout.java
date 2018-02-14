@@ -19,6 +19,7 @@ import com.baseandroid.events.EventDispatcher;
 import com.baseandroid.events.rx.annotations.RxSubscribe;
 import com.example.riccardogazzea.eventbussample.NetworkUtility;
 import com.example.riccardogazzea.eventbussample.R;
+import com.example.riccardogazzea.eventbussample.events.ContextOnPauseEvent;
 import com.example.riccardogazzea.eventbussample.events.UiRecyclerStateIdleEvent;
 import com.example.riccardogazzea.eventbussample.events.UiRecyclerStateNotIdleEvent;
 import com.example.riccardogazzea.eventbussample.model.VideoMediaModel;
@@ -136,6 +137,11 @@ public class VideoLayout extends RelativeLayout {
 
     @RxSubscribe
     public void onConsumeEvent(UiRecyclerStateNotIdleEvent event) {
+        pause();
+    }
+
+    @RxSubscribe
+    public void onConsumeEvent(ContextOnPauseEvent event) {
         pause();
     }
 
