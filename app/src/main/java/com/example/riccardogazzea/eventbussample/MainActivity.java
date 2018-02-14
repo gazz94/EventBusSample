@@ -8,8 +8,10 @@ import android.view.View;
 
 import com.baseandroid.events.EventDispatcher;
 import com.baseandroid.events.rx.RxEventProcessor;
+import com.crashlytics.android.Crashlytics;
 import com.example.riccardogazzea.eventbussample.events.UiRecyclerStateIdleEvent;
 import com.example.riccardogazzea.eventbussample.events.UiRecyclerStateNotIdleEvent;
+import io.fabric.sdk.android.Fabric;
 
 public class MainActivity extends BaseActivity {
 
@@ -21,7 +23,7 @@ public class MainActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        Fabric.with(this, new Crashlytics());
         // l'EventProcessor dovrebbe idealmente essere inizializzato a livello di Application
         EventDispatcher.useEventProcessor(RxEventProcessor.newInstance());
 
