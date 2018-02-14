@@ -8,7 +8,9 @@ import android.support.annotation.RequiresApi;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -48,7 +50,10 @@ public class VideoLayout extends RelativeLayout {
     private SimpleExoPlayer mPlayer;
     private ImageView mPlaceholderImageView;
     private TextView mTextTextView;
+    private ImageButton mPlaybackImageButton, mVolumeImageButton;
     private boolean mPlaying = false;
+    //hold track of the audio state
+    private boolean mAudioPlaying = false;
 
     public VideoLayout(Context context) {
         super(context);
@@ -78,31 +83,39 @@ public class VideoLayout extends RelativeLayout {
 
         // 1. Create a default TrackSelector
         BandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
-        TrackSelection.Factory videoTrackSelectionFactory =
-                new AdaptiveTrackSelection.Factory(bandwidthMeter);
-        TrackSelector trackSelector =
-                new DefaultTrackSelector(videoTrackSelectionFactory);
+        TrackSelection.Factory videoTrackSelectionFactory = new AdaptiveTrackSelection.Factory(bandwidthMeter);
+        TrackSelector trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
 
         // 2. Create the player
         mPlayer = ExoPlayerFactory.newSimpleInstance(context, trackSelector);
         mPlayer.setPlayWhenReady(false);
         mSimpleExoPlayerView = findViewById(R.id.videolayout_player);
         mSimpleExoPlayerView.setPlayer(mPlayer);
-
+        //hide the video controller
+        mSimpleExoPlayerView.setUseController(false);
+        //set volume off
+        //mPlayer.setVolume(0);
         mPlaceholderImageView = findViewById(R.id.videolayout_placeholder_image);
         mTextTextView = findViewById(R.id.videolayout_test_text);
+        mPlaybackImageButton = findViewById(R.id.videolayout_play);
+        mVolumeImageButton = findViewById(R.id.videolayout_volume);
     }
 
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         EventDispatcher.register(this);
+        // TODO: 14/02/2018 Gazz -> non sono sicuro della scelta del listener
+        mVolumeImageButton.setOnClickListener(onVolumeClickListener);
+        mPlaybackImageButton.setOnClickListener(onPlayClickListener);
     }
 
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         EventDispatcher.unregister(this);
+        mVolumeImageButton.setOnClickListener(null);
+        mPlaybackImageButton.setOnClickListener(null);
     }
 
     @RxSubscribe
@@ -110,8 +123,10 @@ public class VideoLayout extends RelativeLayout {
         if (mMediaModel != null) {
             if (mMediaModel.equals(event.getTag())) {
                 play();
+                showControllers(true);
             } else {
                 pause();
+                showControllers(false);
             }
         }
     }
@@ -124,16 +139,16 @@ public class VideoLayout extends RelativeLayout {
     public void setVideoMediaModel(VideoMediaModel mediaModel) {
         mMediaModel = mediaModel;
         ExtractorMediaSource mediaSource = new ExtractorMediaSource.Factory(buildDataSourceFactory(true)).createMediaSource(
-                        Uri.parse(mMediaModel.getUrl()));
+                Uri.parse(mMediaModel.getUrl()));
         // Prepare the player with the source.
         mPlayer.prepare(mediaSource);
     }
 
-    private DataSource.Factory buildDataSourceFactory(boolean useBandwidthMeter){
-        return buildDataSourceFactory(useBandwidthMeter ? new DefaultBandwidthMeter(): null);
+    private DataSource.Factory buildDataSourceFactory(boolean useBandwidthMeter) {
+        return buildDataSourceFactory(useBandwidthMeter ? new DefaultBandwidthMeter() : null);
     }
 
-    private DataSource.Factory buildDataSourceFactory(DefaultBandwidthMeter bandwidthMeter){
+    private DataSource.Factory buildDataSourceFactory(DefaultBandwidthMeter bandwidthMeter) {
         return new DefaultDataSourceFactory(getContext(), bandwidthMeter, buildHttpDataSourceFactory(bandwidthMeter));
     }
 
@@ -145,18 +160,25 @@ public class VideoLayout extends RelativeLayout {
         return mPlaying;
     }
 
+    private boolean isAudioPlaying() {
+        return mAudioPlaying;
+    }
+
     public void play() {
-        mPlaying = true;
-        if (mPlayer != null){
+        if (mPlayer != null) {
+            mPlaying = true;
             mPlayer.setPlayWhenReady(true);
+            //change the icon
+            mPlaybackImageButton.setImageResource(R.drawable.exo_controls_pause);
         }
     }
 
     public void pause() {
-        // TODO pause video
         if (isPlaying()) {
             mPlaying = false;
             mPlayer.setPlayWhenReady(false);
+            //change the icon
+            mPlaybackImageButton.setImageResource(R.drawable.exo_controls_play);
         }
     }
 
@@ -165,6 +187,45 @@ public class VideoLayout extends RelativeLayout {
             mPlaying = false;
             mPlayer.stop();
             mPlayer.release();
+        }
+    }
+
+    private OnClickListener onVolumeClickListener = new OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (isAudioPlaying()){
+                mAudioPlaying = false;
+                mPlayer.setVolume(0);
+                //change the volume icon
+                mVolumeImageButton.setImageResource(android.R.drawable.ic_lock_silent_mode);
+            }else{
+                mAudioPlaying = true;
+                mPlayer.setVolume(1);
+                //change the volume icon
+                mVolumeImageButton.setImageResource(android.R.drawable.ic_lock_silent_mode_off);
+            }
+        }
+    };
+
+    private OnClickListener onPlayClickListener = new OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (isPlaying()){
+                pause();
+            }else{
+                play();
+            }
+        }
+    };
+
+    private void showControllers(boolean show){
+        //show the controllers on a video at time
+        if (show){
+            mPlaybackImageButton.setVisibility(VISIBLE);
+            mVolumeImageButton.setVisibility(VISIBLE);
+        }else{
+            mPlaybackImageButton.setVisibility(INVISIBLE);
+            mVolumeImageButton.setVisibility(INVISIBLE);
         }
     }
 }

@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<merge
+<!--<merge
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/listitem_height">
+    android:layout_height="@dimen/listitem_height">-->
 
-    <!--<RelativeLayout-->
-        <!--xmlns:android="http://schemas.android.com/apk/res/android"-->
-        <!--xmlns:app="http://schemas.android.com/apk/res-auto"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="@dimen/listitem_height"-->
-        <!--android:background="@android:color/black">-->
+    <RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/listitem_height"
+        android:background="@android:color/black">
 
         <com.google.android.exoplayer2.ui.SimpleExoPlayerView
             android:id="@+id/videolayout_player"
@@ -20,8 +20,7 @@
             android:visibility="visible"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toTopOf="parent"/>
-
-        <ImageView
+    <ImageView
             android:id="@+id/videolayout_placeholder_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -39,5 +38,26 @@
             android:visibility="invisible"
             android:textColor="@android:color/white"/>
 
-    <!--</RelativeLayout>-->
-</merge>
+    <ImageButton
+        android:id="@+id/videolayout_volume"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_toStartOf="@+id/videolayout_play"
+        android:background="@android:color/black"
+        android:alpha="0.5"
+        android:layout_marginEnd="10dp"
+        app:srcCompat="@android:drawable/ic_lock_silent_mode_off"/>
+
+    <ImageButton
+        android:id="@+id/videolayout_play"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:background="@android:color/black"
+        android:alpha="0.5"
+        app:srcCompat="@drawable/exo_controls_play"/>
+
+</RelativeLayout>
+    <!--</merge>-->
