@@ -17,6 +17,7 @@ import android.widget.TextView;
 
 import com.baseandroid.events.EventDispatcher;
 import com.baseandroid.events.rx.annotations.RxSubscribe;
+import com.example.riccardogazzea.eventbussample.NetworkUtility;
 import com.example.riccardogazzea.eventbussample.R;
 import com.example.riccardogazzea.eventbussample.events.UiRecyclerStateIdleEvent;
 import com.example.riccardogazzea.eventbussample.events.UiRecyclerStateNotIdleEvent;
@@ -122,7 +123,9 @@ public class VideoLayout extends RelativeLayout {
     public void onConsumeEvent(UiRecyclerStateIdleEvent event) {
         if (mMediaModel != null) {
             if (mMediaModel.equals(event.getTag())) {
-                play();
+                if (NetworkUtility.getNetworkType(getContext()) == NetworkUtility.TYPE_WIFI){
+                    play();
+                }
                 showControllers(true);
             } else {
                 pause();
