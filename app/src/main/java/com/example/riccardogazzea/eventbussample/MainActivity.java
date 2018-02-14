@@ -11,7 +11,7 @@ import com.baseandroid.events.rx.RxEventProcessor;
 import com.example.riccardogazzea.eventbussample.events.UiRecyclerStateIdleEvent;
 import com.example.riccardogazzea.eventbussample.events.UiRecyclerStateNotIdleEvent;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity {
 
     RecyclerView mRecyclerView;
     MediaModelAdapter mAdapter;
