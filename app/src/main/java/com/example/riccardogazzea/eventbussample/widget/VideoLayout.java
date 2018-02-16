@@ -46,7 +46,6 @@ public class VideoLayout extends RelativeLayout {
 
     private VideoMediaModel mMediaModel;
 
-    private SimpleExoPlayer mPlayer;
     ExtractorMediaSource mMediaSource;
 
     private SimpleExoPlayerView mSimpleExoPlayerView;
@@ -61,11 +60,11 @@ public class VideoLayout extends RelativeLayout {
         @Override
         public void onClick(View v) {
             if (isAudioPlaying()) {
-                mPlayer.setVolume(0);
+                ExoPlayerManager.getInstance().getPlayer().setVolume(0);
 
                 notifyAudioStateChange();
             } else {
-                mPlayer.setVolume(1);
+                ExoPlayerManager.getInstance().getPlayer().setVolume(1);
 
                 notifyAudioStateChange();
             }
@@ -118,7 +117,6 @@ public class VideoLayout extends RelativeLayout {
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         EventDispatcher.register(this);
-        // TODO: 14/02/2018 Gazz -> non sono sicuro della scelta del listener
         mVolumeImageButton.setOnClickListener(onVolumeClickListener);
         mPlaybackImageButton.setOnClickListener(onPlayClickListener);
     }
@@ -156,6 +154,7 @@ public class VideoLayout extends RelativeLayout {
         pause();
     }
 
+
     public void setVideoMediaModel(VideoMediaModel mediaModel) {
         mMediaModel = mediaModel;
     }
@@ -176,9 +175,13 @@ public class VideoLayout extends RelativeLayout {
         if (mPlaying) {
             mPlaceholderImageView.animate().alpha(0f).setDuration(150).start();
             mPlaybackImageButton.setImageResource(R.drawable.ic_pause_white_24dp);
+            //show volume btn
+            mVolumeImageButton.setVisibility(VISIBLE);
         } else {
             mPlaceholderImageView.animate().alpha(1f).setDuration(150).start();
             mPlaybackImageButton.setImageResource(R.drawable.ic_play_arrow_white_24dp);
+            //hide volume btn
+            mVolumeImageButton.setVisibility(INVISIBLE);
         }
     }
 
@@ -195,45 +198,32 @@ public class VideoLayout extends RelativeLayout {
     }
 
     private boolean isAudioPlaying() {
-        return mPlayer != null ? mPlayer.getVolume() > 0f : false;
+        return ExoPlayerManager.getInstance().getPlayer().getVolume() > 0f;
     }
 
     private boolean prepare() {
         if (mMediaModel != null) {
-            if (mPlayer == null) {
-                mPlayer = ExoPlayerManager.getInstance().getPlayer();
 
-                /*
-                // 1. Create a default TrackSelector
-                BandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
-                TrackSelection.Factory videoTrackSelectionFactory = new AdaptiveTrackSelection.Factory(bandwidthMeter);
-                TrackSelector trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
-
-                // 2. Create the player
-                mPlayer = ExoPlayerFactory.newSimpleInstance(getContext(), trackSelector);
-                mPlayer.setPlayWhenReady(false);
-                mPlayer.setVolume(0);
-                */
-
-                if (mSimpleExoPlayerView == null) {
-                    final ViewStub viewStub = findViewById(R.id.videolayout_player_stub);
-                    if (viewStub != null) {
-                        mSimpleExoPlayerView = (SimpleExoPlayerView) viewStub.inflate();
-                    } else {
-                        mSimpleExoPlayerView = findViewById(R.id.videolayout_player);
-                    }
-                    mSimpleExoPlayerView.setPlayer(mPlayer);
-                    mSimpleExoPlayerView.setUseController(false);
-                    mSimpleExoPlayerView.setResizeMode(RESIZE_MODE_FILL);
+            if (mSimpleExoPlayerView == null) {
+                final ViewStub viewStub = findViewById(R.id.videolayout_player_stub);
+                if (viewStub != null) {
+                    mSimpleExoPlayerView = (SimpleExoPlayerView) viewStub.inflate();
+                } else {
+                    mSimpleExoPlayerView = findViewById(R.id.videolayout_player);
                 }
+                //mSimpleExoPlayerView.setPlayer(mPlayer);
             }
-
+            ExoPlayerManager.getInstance().switchTargetView(mSimpleExoPlayerView);
+            mSimpleExoPlayerView.setUseController(false);
+            mSimpleExoPlayerView.setResizeMode(RESIZE_MODE_FILL);
             // Prepare the player with the source.
-            if (mMediaSource == null) {
-                mMediaSource = new ExtractorMediaSource.Factory(buildDataSourceFactory(true)).createMediaSource(Uri.parse(mMediaModel.getUrl()));
+            if (mMediaSource != null) {
+                mMediaSource.releaseSource();
+                mMediaSource = null;
             }
-            mPlayer.prepare(mMediaSource);
-            mPlayer.seekTo(mLastPlaybackPosition);
+            mMediaSource = new ExtractorMediaSource.Factory(buildDataSourceFactory(true)).createMediaSource(Uri.parse(mMediaModel.getUrl()));
+            ExoPlayerManager.getInstance().getPlayer().prepare(mMediaSource);
+            ExoPlayerManager.getInstance().getPlayer().seekTo(mLastPlaybackPosition);
             return true;
         } else {
             return false;
@@ -244,7 +234,7 @@ public class VideoLayout extends RelativeLayout {
         if (prepare()) {
 
             mPlaying = true;
-            mPlayer.setPlayWhenReady(true);
+            ExoPlayerManager.getInstance().getPlayer().setPlayWhenReady(true);
 
             notifyPlayStateChange();
         } else {
@@ -253,11 +243,11 @@ public class VideoLayout extends RelativeLayout {
     }
 
     public void pause() {
-        if (mPlayer != null) {
+        if (ExoPlayerManager.getInstance().getPlayer() != null) {
             if (mPlaying) {
-                mLastPlaybackPosition = mPlayer.getCurrentPosition();
+                mLastPlaybackPosition = ExoPlayerManager.getInstance().getPlayer().getCurrentPosition();
                 mPlaying = false;
-                mPlayer.setPlayWhenReady(false);
+                ExoPlayerManager.getInstance().getPlayer().setPlayWhenReady(false);
 
                 notifyPlayStateChange();
             }
@@ -265,11 +255,11 @@ public class VideoLayout extends RelativeLayout {
     }
 
     public void stop() {
-        if (mPlayer != null) {
+        if (ExoPlayerManager.getInstance().getPlayer() != null) {
             mLastPlaybackPosition = 0L;
             mPlaying = false;
 
-            mPlayer.stop();
+            ExoPlayerManager.getInstance().getPlayer().stop();
             //mPlayer.release();
             //mPlayer = null;
         }
@@ -286,8 +276,7 @@ public class VideoLayout extends RelativeLayout {
         //show the controllers on a video at time
         if (show) {
             mPlaybackImageButton.setVisibility(VISIBLE);
-            mVolumeImageButton.setVisibility(VISIBLE);
-
+            mVolumeImageButton.setVisibility(isPlaying()? VISIBLE : INVISIBLE);
             notifyAudioStateChange();
         } else {
             mPlaybackImageButton.setVisibility(INVISIBLE);

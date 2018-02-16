@@ -47,5 +47,5 @@ project.ext.computeVersionCode = { versionName ->
     return versionCode;
 }
 
-project.ext.set("versionName", "0.1.0")
+project.ext.set("versionName", "0.2.0")
 project.ext.set("versionCode", project.computeVersionCode(project.versionName))

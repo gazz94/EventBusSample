@@ -8,6 +8,7 @@ import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
+import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
 import com.google.android.exoplayer2.upstream.BandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 
@@ -20,6 +21,7 @@ public class ExoPlayerManager {
 
     private static ExoPlayerManager sInstance;
     private SimpleExoPlayer mPlayer;
+    private SimpleExoPlayerView mSimpleExoPlayerView;
 
     public static void initInstance(Context context) {
         if (sInstance == null) {
@@ -52,5 +54,14 @@ public class ExoPlayerManager {
             mPlayer.release();
             mPlayer = null;
         }
+    }
+
+    public void switchTargetView(SimpleExoPlayerView exoPlayerView){
+        if (mSimpleExoPlayerView == null){
+            exoPlayerView.setPlayer(mPlayer);
+        }else{
+            SimpleExoPlayerView.switchTargetView(mPlayer, mSimpleExoPlayerView, exoPlayerView);
+        }
+        mSimpleExoPlayerView = exoPlayerView;
     }
 }
