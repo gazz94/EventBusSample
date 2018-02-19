@@ -1,13 +1,23 @@
+buildscript {
+    repositories {
+        maven { url 'https://maven.fabric.io/public' }
+    }
+
+    dependencies {
+        classpath 'io.fabric.tools:gradle:1.+'
+    }
+}
 apply plugin: 'com.android.application'
+apply plugin: 'io.fabric'
 
 android {
     compileSdkVersion 26
     defaultConfig {
-        applicationId "com.example.riccardogazzea.eventbussample"
-        minSdkVersion 15
+        applicationId "cc.officina.poc.nowr_video"
+        minSdkVersion 19
         targetSdkVersion 26
-        versionCode 1
-        versionName "1.0"
+        versionName project.versionName
+        versionCode project.versionCode
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -19,6 +29,7 @@ android {
 }
 repositories{
     maven { url 'https://dl.bintray.com/sysdata/maven' }
+    maven { url 'https://maven.fabric.io/public' }
 }
 
 dependencies {
@@ -33,7 +44,12 @@ dependencies {
     // Because RxAndroid releases are few and far between, it is recommended you also
     // explicitly depend on RxJava's latest version for bug fixes and new features.
     implementation 'io.reactivex:rxjava:1.2.6'
+    //exoplayer
+    implementation 'com.google.android.exoplayer:exoplayer:2.6.1'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
+    compile('com.crashlytics.sdk.android:crashlytics:2.9.0@aar') {
+        transitive = true;
+    }
 }

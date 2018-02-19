@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<merge
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/listitem_height">
+
+    <!--    <RelativeLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/listitem_height"
+            android:background="@android:color/black">-->
+
+    <ViewStub
+        android:id="@+id/videolayout_player_stub"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:inflatedId="@+id/videolayout_player"
+        android:layout="@layout/video_player_view"/>
+
+    <ImageView
+        android:id="@+id/videolayout_placeholder_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerInParent="true"
+        android:scaleType="centerCrop"
+        android:src="@drawable/video_placeholder"
+        android:visibility="visible"/>
+
+    <android.support.v7.widget.AppCompatImageButton
+        android:id="@+id/videolayout_volume"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginEnd="10dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:padding="8dp"
+        android:src="@drawable/ic_volume_off_white_24dp"
+        android:visibility="invisible"/>
+
+    <android.support.v7.widget.AppCompatImageButton
+        android:id="@+id/videolayout_play"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:background="?android:attr/selectableItemBackground"
+        android:padding="8dp"
+        android:src="@drawable/ic_play_arrow_white_24dp"
+        android:visibility="invisible"/>
+
+    <!--</RelativeLayout>-->
+</merge>
