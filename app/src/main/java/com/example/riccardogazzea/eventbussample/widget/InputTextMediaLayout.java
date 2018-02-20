@@ -11,20 +11,20 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewStub;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
+import com.baseandroid.events.Event;
 import com.baseandroid.events.EventDispatcher;
 import com.baseandroid.events.rx.annotations.RxSubscribe;
 import com.example.riccardogazzea.eventbussample.ExoPlayerManager;
-import com.example.riccardogazzea.eventbussample.NetworkUtility;
 import com.example.riccardogazzea.eventbussample.R;
 import com.example.riccardogazzea.eventbussample.events.ContextOnPauseEvent;
-import com.example.riccardogazzea.eventbussample.events.UiRecyclerStateIdleEvent;
-import com.example.riccardogazzea.eventbussample.events.UiRecyclerStateNotIdleEvent;
-import com.example.riccardogazzea.eventbussample.model.VideoMediaModel;
+import com.example.riccardogazzea.eventbussample.events.ContextOnResumeEvent;
+import com.example.riccardogazzea.eventbussample.model.MediaModel;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
 import com.google.android.exoplayer2.upstream.DataSource;
@@ -33,8 +33,9 @@ import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.util.Util;
+import com.squareup.picasso.Picasso;
 
-import static android.support.v4.media.session.PlaybackStateCompat.REPEAT_MODE_NONE;
+import static com.google.android.exoplayer2.Player.REPEAT_MODE_ONE;
 import static com.google.android.exoplayer2.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL;
 
 /**
@@ -42,17 +43,18 @@ import static com.google.android.exoplayer2.ui.AspectRatioFrameLayout.RESIZE_MOD
  *
  * @author Umberto Marini
  */
-public class VideoLayout extends RelativeLayout {
+public class InputTextMediaLayout extends RelativeLayout {
 
-    private VideoMediaModel mMediaModel;
+    private MediaModel mMediaModel;
 
     ExtractorMediaSource mMediaSource;
 
     private SimpleExoPlayerView mSimpleExoPlayerView;
-    private ImageView mPlaceholderImageView;
-    private ImageButton mPlaybackImageButton, mVolumeImageButton;
-
-    private boolean mPlaying = false;
+    private ImageView mPictureView;
+    private EditText mMainTextView;
+    private EditText mSecondaryTextView;
+    private ImageButton mVolumeImageButton;
+    private ImageButton mProceedImageButton;
 
     private long mLastPlaybackPosition = 0;
 
@@ -71,46 +73,47 @@ public class VideoLayout extends RelativeLayout {
         }
     };
 
-    private OnClickListener onPlayClickListener = new OnClickListener() {
+    private OnClickListener onProceedClickListener = new OnClickListener() {
         @Override
         public void onClick(View v) {
-            if (mPlaying) {
-                pause();
-            } else {
-                play();
-            }
+            stop();
+
+            OnDoneClickEvent event = new OnDoneClickEvent(mMainTextView.getText(), mSecondaryTextView.getText(), mMediaModel);
+            EventDispatcher.post(event);
         }
     };
 
-    public VideoLayout(Context context) {
+    public InputTextMediaLayout(Context context) {
         super(context);
         init(context);
     }
 
-    public VideoLayout(Context context, @Nullable AttributeSet attrs) {
+    public InputTextMediaLayout(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         init(context);
     }
 
-    public VideoLayout(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public InputTextMediaLayout(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(context);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public VideoLayout(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    public InputTextMediaLayout(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         init(context);
     }
 
     private void init(Context context) {
-        LayoutInflater.from(context).inflate(R.layout.listitem_videolayout, this, true);
-        setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getResources().getDimensionPixelSize(R.dimen.listitem_height)));
+        LayoutInflater.from(context).inflate(R.layout.layout_videoinputtext, this, true);
+        setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         setBackgroundColor(ContextCompat.getColor(context, android.R.color.black));
 
-        mPlaceholderImageView = findViewById(R.id.videolayout_placeholder_image);
-        mPlaybackImageButton = findViewById(R.id.videolayout_play);
-        mVolumeImageButton = findViewById(R.id.videolayout_volume);
+        mPictureView = findViewById(R.id.videoinputtextlayout_picture);
+        mMainTextView = findViewById(R.id.videoinputtextlayout_main_text);
+        mSecondaryTextView = findViewById(R.id.videoinputtextlayout_secondary_text);
+        mProceedImageButton = findViewById(R.id.videoinputtextlayout_proceed);
+        mVolumeImageButton = findViewById(R.id.videoinputtextlayout_volume);
     }
 
     @Override
@@ -118,7 +121,7 @@ public class VideoLayout extends RelativeLayout {
         super.onAttachedToWindow();
         EventDispatcher.register(this);
         mVolumeImageButton.setOnClickListener(onVolumeClickListener);
-        mPlaybackImageButton.setOnClickListener(onPlayClickListener);
+        mProceedImageButton.setOnClickListener(onProceedClickListener);
     }
 
     @Override
@@ -126,27 +129,14 @@ public class VideoLayout extends RelativeLayout {
         super.onDetachedFromWindow();
         EventDispatcher.unregister(this);
         mVolumeImageButton.setOnClickListener(null);
-        mPlaybackImageButton.setOnClickListener(null);
+        mProceedImageButton.setOnClickListener(null);
+
+        stop();
     }
 
     @RxSubscribe
-    public void onConsumeEvent(UiRecyclerStateIdleEvent event) {
-        if (mMediaModel != null) {
-            if (mMediaModel.equals(event.getTag())) {
-                if (NetworkUtility.getNetworkType(getContext()) == NetworkUtility.TYPE_WIFI) {
-                    play();
-                }
-                showControllers(true);
-            } else {
-                pause();
-                showControllers(false);
-            }
-        }
-    }
-
-    @RxSubscribe
-    public void onConsumeEvent(UiRecyclerStateNotIdleEvent event) {
-        pause();
+    public void onConsumeEvent(ContextOnResumeEvent event) {
+        play();
     }
 
     @RxSubscribe
@@ -154,8 +144,19 @@ public class VideoLayout extends RelativeLayout {
         pause();
     }
 
-    public void setVideoMediaModel(VideoMediaModel mediaModel) {
+    public void setMediaModel(MediaModel mediaModel) {
         mMediaModel = mediaModel;
+
+        if (mMediaModel != null) {
+            if (mMediaModel.isVideo()) {
+                play();
+                mVolumeImageButton.setVisibility(VISIBLE);
+            } else if (mMediaModel.isPicture()) {
+                Picasso.with(getContext())
+                        .load(mMediaModel.getUrl())
+                        .into(mPictureView);
+            }
+        }
     }
 
     private DataSource.Factory buildDataSourceFactory(boolean useBandwidthMeter) {
@@ -170,30 +171,12 @@ public class VideoLayout extends RelativeLayout {
         return new DefaultHttpDataSourceFactory(Util.getUserAgent(getContext(), "EventBusSample"), bandwidthMeter);
     }
 
-    private void notifyPlayStateChange() {
-        if (mPlaying) {
-            mPlaceholderImageView.animate().alpha(0f).setDuration(150).start();
-            mPlaybackImageButton.setImageResource(R.drawable.ic_pause_white_24dp);
-            //show volume btn
-            mVolumeImageButton.setVisibility(VISIBLE);
-        } else {
-            mPlaceholderImageView.animate().alpha(1f).setDuration(150).start();
-            mPlaybackImageButton.setImageResource(R.drawable.ic_play_arrow_white_24dp);
-            //hide volume btn
-            mVolumeImageButton.setVisibility(INVISIBLE);
-        }
-    }
-
     private void notifyAudioStateChange() {
         if (isAudioPlaying()) {
             mVolumeImageButton.setImageResource(R.drawable.ic_volume_up_white_24dp);
         } else {
             mVolumeImageButton.setImageResource(R.drawable.ic_volume_off_white_24dp);
         }
-    }
-
-    private boolean isPlaying() {
-        return mPlaying;
     }
 
     private boolean isAudioPlaying() {
@@ -204,11 +187,11 @@ public class VideoLayout extends RelativeLayout {
         if (mMediaModel != null) {
 
             if (mSimpleExoPlayerView == null) {
-                final ViewStub viewStub = findViewById(R.id.videolayout_player_stub);
+                final ViewStub viewStub = findViewById(R.id.videoinputtextlayout_player_stub);
                 if (viewStub != null) {
                     mSimpleExoPlayerView = (SimpleExoPlayerView) viewStub.inflate();
                 } else {
-                    mSimpleExoPlayerView = findViewById(R.id.videolayout_player);
+                    mSimpleExoPlayerView = findViewById(R.id.videoinputtextlayout_player);
                 }
                 //mSimpleExoPlayerView.setPlayer(mPlayer);
             }
@@ -223,7 +206,7 @@ public class VideoLayout extends RelativeLayout {
             mMediaSource = new ExtractorMediaSource.Factory(buildDataSourceFactory(true)).createMediaSource(Uri.parse(mMediaModel.getUrl()));
             ExoPlayerManager.getInstance().getPlayer().prepare(mMediaSource);
             ExoPlayerManager.getInstance().getPlayer().seekTo(mLastPlaybackPosition);
-            ExoPlayerManager.getInstance().getPlayer().setRepeatMode(REPEAT_MODE_NONE);
+            ExoPlayerManager.getInstance().getPlayer().setRepeatMode(REPEAT_MODE_ONE);
             return true;
         } else {
             return false;
@@ -232,11 +215,7 @@ public class VideoLayout extends RelativeLayout {
 
     public void play() {
         if (prepare()) {
-
-            mPlaying = true;
             ExoPlayerManager.getInstance().getPlayer().setPlayWhenReady(true);
-
-            notifyPlayStateChange();
         } else {
             Toast.makeText(getContext(), "Ops... Something went wrong!", Toast.LENGTH_SHORT).show();
         }
@@ -244,43 +223,46 @@ public class VideoLayout extends RelativeLayout {
 
     public void pause() {
         if (ExoPlayerManager.getInstance().getPlayer() != null) {
-            if (mPlaying) {
-                mLastPlaybackPosition = ExoPlayerManager.getInstance().getPlayer().getCurrentPosition();
-                mPlaying = false;
-                ExoPlayerManager.getInstance().getPlayer().setPlayWhenReady(false);
-
-                notifyPlayStateChange();
-            }
+            mLastPlaybackPosition = ExoPlayerManager.getInstance().getPlayer().getCurrentPosition();
+            ExoPlayerManager.getInstance().getPlayer().setPlayWhenReady(false);
         }
     }
 
     public void stop() {
         if (ExoPlayerManager.getInstance().getPlayer() != null) {
             mLastPlaybackPosition = 0L;
-            mPlaying = false;
-
             ExoPlayerManager.getInstance().getPlayer().stop();
-            //mPlayer.release();
-            //mPlayer = null;
         }
 
         if (mMediaSource != null) {
             mMediaSource.releaseSource();
             mMediaSource = null;
         }
-
-        notifyPlayStateChange();
     }
 
-    private void showControllers(boolean show) {
-        //show the controllers on a video at time
-        if (show) {
-            mPlaybackImageButton.setVisibility(VISIBLE);
-            mVolumeImageButton.setVisibility(isPlaying() ? VISIBLE : INVISIBLE);
-            notifyAudioStateChange();
-        } else {
-            mPlaybackImageButton.setVisibility(INVISIBLE);
-            mVolumeImageButton.setVisibility(INVISIBLE);
+    @Event(type = Event.Type.UI)
+    public class OnDoneClickEvent {
+
+        private CharSequence mMainText;
+        private CharSequence mSecondaryText;
+        private MediaModel mMediaModel;
+
+        public OnDoneClickEvent(CharSequence mainText, CharSequence secondaryText, MediaModel mediaModel) {
+            mMainText = mainText;
+            mSecondaryText = secondaryText;
+            mMediaModel = mediaModel;
+        }
+
+        public CharSequence getMainText() {
+            return mMainText;
+        }
+
+        public CharSequence getSecondaryText() {
+            return mSecondaryText;
+        }
+
+        public MediaModel getMediaModel() {
+            return mMediaModel;
         }
     }
 }

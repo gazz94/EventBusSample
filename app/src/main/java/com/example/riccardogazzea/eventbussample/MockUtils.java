@@ -2,6 +2,7 @@ package com.example.riccardogazzea.eventbussample;
 
 import com.example.riccardogazzea.eventbussample.model.GenericMediaModel;
 import com.example.riccardogazzea.eventbussample.model.MediaModel;
+import com.example.riccardogazzea.eventbussample.model.PictureMediaModel;
 import com.example.riccardogazzea.eventbussample.model.VideoMediaModel;
 
 import java.util.ArrayList;
@@ -15,7 +16,10 @@ import java.util.List;
 public class MockUtils {
 
     private static final String TEST_VIDEO_URL = "https://s3-eu-west-1.amazonaws.com/nowr-dev/uservideos/1004/SampleVideo_1280x720_5mb.mp4";
+    private static final String TEST_PICTURE_URL = "https://www.nowr.in/wp-content/uploads/2017/07/cropped-1024greenblack-rounded-1.png";
     public static final List<MediaModel> VIDEOS;
+    public static final MediaModel VIDEO = new VideoMediaModel(1, TEST_VIDEO_URL);
+    public static final MediaModel PICTURE = new PictureMediaModel(1, TEST_PICTURE_URL);
 
     static {
         VIDEOS = new ArrayList<>();

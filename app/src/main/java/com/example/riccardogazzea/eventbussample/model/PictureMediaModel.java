@@ -7,10 +7,10 @@ import android.os.Parcel;
  *
  * @author Umberto Marini
  */
-public class GenericMediaModel extends MediaModel {
+public class PictureMediaModel extends MediaModel {
 
-    public GenericMediaModel(int identifier) {
-        super(identifier);
+    public PictureMediaModel(int identifier, String url) {
+        super(identifier, url);
     }
 
     @Override
@@ -20,7 +20,7 @@ public class GenericMediaModel extends MediaModel {
 
     @Override
     public boolean isPicture() {
-        return false;
+        return true;
     }
 
     @Override
@@ -33,19 +33,19 @@ public class GenericMediaModel extends MediaModel {
         super.writeToParcel(dest, flags);
     }
 
-    protected GenericMediaModel(Parcel in) {
+    protected PictureMediaModel(Parcel in) {
         super(in);
     }
 
-    public static final Creator<GenericMediaModel> CREATOR = new Creator<GenericMediaModel>() {
+    public static final Creator<PictureMediaModel> CREATOR = new Creator<PictureMediaModel>() {
         @Override
-        public GenericMediaModel createFromParcel(Parcel source) {
-            return new GenericMediaModel(source);
+        public PictureMediaModel createFromParcel(Parcel source) {
+            return new PictureMediaModel(source);
         }
 
         @Override
-        public GenericMediaModel[] newArray(int size) {
-            return new GenericMediaModel[size];
+        public PictureMediaModel[] newArray(int size) {
+            return new PictureMediaModel[size];
         }
     };
 }

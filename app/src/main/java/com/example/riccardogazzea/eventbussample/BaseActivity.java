@@ -3,6 +3,7 @@ package com.example.riccardogazzea.eventbussample;
 import android.support.v7.app.AppCompatActivity;
 import com.baseandroid.events.EventDispatcher;
 import com.example.riccardogazzea.eventbussample.events.ContextOnPauseEvent;
+import com.example.riccardogazzea.eventbussample.events.ContextOnResumeEvent;
 
 /**
  * Created on 13/02/18.
@@ -19,6 +20,8 @@ public class BaseActivity extends AppCompatActivity {
         super.onResume();
         EventDispatcher.loadPoint(this, String.valueOf(mEventDispatcherTag));
         EventDispatcher.register(this);
+
+        EventDispatcher.post(new ContextOnResumeEvent());
     }
 
     @Override

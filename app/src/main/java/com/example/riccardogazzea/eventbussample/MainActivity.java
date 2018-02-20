@@ -1,14 +1,17 @@
 package com.example.riccardogazzea.eventbussample;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
+
 import com.baseandroid.events.EventDispatcher;
 import com.baseandroid.events.rx.RxEventProcessor;
 import com.crashlytics.android.Crashlytics;
 import com.example.riccardogazzea.eventbussample.events.UiRecyclerStateIdleEvent;
 import com.example.riccardogazzea.eventbussample.events.UiRecyclerStateNotIdleEvent;
+
 import io.fabric.sdk.android.Fabric;
 
 public class MainActivity extends BaseActivity {
@@ -32,7 +35,7 @@ public class MainActivity extends BaseActivity {
 
         // init recycler
         mLayoutManager = new LinearLayoutManager(this);
-        mRecyclerView = findViewById(R.id.list);
+        mRecyclerView = findViewById(R.id.main_recyclerview);
         mRecyclerView.setLayoutManager(mLayoutManager);
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -86,5 +89,18 @@ public class MainActivity extends BaseActivity {
         mAdapter = null;
 
         ExoPlayerManager.getInstance().release();
+    }
+
+    public void startNewContentActivity(View view) {
+        final int id = view.getId();
+        if (R.id.main_newcontent_video_button == id) {
+            final Intent intent = new Intent(this, NewContentActivity.class);
+            intent.putExtra(NewContentActivity.EXTRA_MEDIA_MODEL, MockUtils.VIDEO);
+            startActivity(intent);
+        } else if (R.id.main_newcontent_picture_button == id) {
+            final Intent intent = new Intent(this, NewContentActivity.class);
+            intent.putExtra(NewContentActivity.EXTRA_MEDIA_MODEL, MockUtils.PICTURE);
+            startActivity(intent);
+        }
     }
 }

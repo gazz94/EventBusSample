@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!--<RelativeLayout-->
+    <!--xmlns:android="http://schemas.android.com/apk/res/android"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent"-->
+    <!--android:background="@android:color/black">-->
+
+    <ViewStub
+        android:id="@+id/videoinputtextlayout_player_stub"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:inflatedId="@+id/videoinputtextlayout_player"
+        android:layout="@layout/video_player_view"/>
+
+    <ImageView
+        android:id="@+id/videoinputtextlayout_picture"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerInParent="true"
+        android:scaleType="centerCrop"
+        android:visibility="visible"/>
+
+    <View
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="0.7"
+        android:background="@android:color/black"/>
+
+    <android.support.v7.widget.AppCompatImageButton
+        android:id="@+id/videoinputtextlayout_volume"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:layout_margin="10dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:padding="8dp"
+        android:src="@drawable/ic_volume_off_white_24dp"
+        android:visibility="gone"
+        tools:visibility="visible"/>
+
+    <EditText
+        android:id="@+id/videoinputtextlayout_main_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/videoinputtextlayout_divider"
+        android:background="@null"
+        android:gravity="center"
+        android:hint="WHAT'S IS GOING ON?"
+        android:padding="16dp"
+        android:textAppearance="@style/Base.TextAppearance.AppCompat.Display1"
+        android:textColor="@android:color/white"
+        android:textColorHint="@android:color/darker_gray"/>
+
+    <View
+        android:id="@+id/videoinputtextlayout_divider"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_centerInParent="true"/>
+
+    <EditText
+        android:id="@+id/videoinputtextlayout_secondary_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/videoinputtextlayout_divider"
+        android:background="@null"
+        android:gravity="center"
+        android:hint="That's all?"
+        android:paddingBottom="4dp"
+        android:paddingEnd="16dp"
+        android:paddingStart="16dp"
+        android:paddingTop="4dp"
+        android:textAppearance="@style/Base.TextAppearance.AppCompat.Subhead"
+        android:textColor="@android:color/white"
+        android:textColorHint="@android:color/darker_gray"/>
+
+    <android.support.v7.widget.AppCompatImageButton
+        android:id="@+id/videoinputtextlayout_proceed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_margin="10dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:padding="8dp"
+        android:src="@drawable/ic_check_white_24dp"/>
+
+    <!--</RelativeLayout>-->
+</merge>
